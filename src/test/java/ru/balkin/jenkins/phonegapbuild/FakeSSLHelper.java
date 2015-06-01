@@ -39,5 +39,11 @@ public class FakeSSLHelper {
 
 		// Install the all-trusting host verifier
 		HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
+
+		/*
+		HostConfiguration hostConfiguration = client.getHostConfiguration();
+		hostConfiguration.setProxy("localhost", 8888);
+		client.setHostConfiguration(hostConfiguration);
+		 */
 	};
 }

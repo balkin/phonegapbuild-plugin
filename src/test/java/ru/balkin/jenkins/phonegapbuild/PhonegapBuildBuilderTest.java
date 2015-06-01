@@ -1,7 +1,12 @@
 package ru.balkin.jenkins.phonegapbuild;
 
+import hudson.model.*;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
+
+import java.io.File;
+import java.io.IOException;
 
 /**
  * <p>Description: </p>
@@ -12,31 +17,61 @@ import org.junit.Test;
  */
 public class PhonegapBuildBuilderTest {
 
-	@Test
-	public void testAddToZip() throws Exception {
+	public static final String APPLICATION_ID = "123";
+	public static final String APPLICATION_TOKEN = "12345_7890abcdefghij";
+	public static final String APPLICATION_TITLE = "TestApp";
+
+	PhonegapBuildBuilder phonegapBuilder;
+
+	@Before
+	public void beforeMethod() {
+		phonegapBuilder = new PhonegapBuildBuilder(APPLICATION_ID, APPLICATION_TOKEN, APPLICATION_TITLE, true);
 	}
 
 	@Test
 	public void testPerform() throws Exception {
+		final FakeItemGroup itemGroup = new FakeItemGroup(new File("/tmp/fakeProject"));
+		final FreeStyleProject p = new FreeStyleProject(itemGroup, "freestyle") {
+			/**
+			 * Allocates a new buildCommand number.
+			 */
+			@Override
+			public synchronized int assignBuildNumber() throws IOException {
+				return 1;
+			}
 
+			/**
+			 * Directory for storing {@link Run} records.
+			 * <p/>
+			 * Some {@link Job}s may not have backing data store for {@link Run}s, but
+			 * those {@link Job}s that use file system for storing data should use this
+			 * directory for consistency.
+			 *
+			 * @see RunMap
+			 */
+			@Override
+			public File getBuildDir() {
+				return itemGroup.getRootDir();
+			}
+		};
+		final AbstractBuild build = new FreeStyleBuild(p);
+
+		phonegapBuilder.perform(build, null, new FakeBuildListener());
 	}
 
 	@Test
 	public void testGetApplicationId() throws Exception {
-		final PhonegapBuildBuilder pbb = new PhonegapBuildBuilder("123", "authToken", "AppTitle", true);
-		Assert.assertEquals("Application Id should be 123", "123", pbb.getApplicationId());
+		Assert.assertEquals("Application Id should match", APPLICATION_ID, phonegapBuilder.getApplicationId());
 	}
 
 	@Test
 	public void testGetAuthToken() throws Exception {
-		final PhonegapBuildBuilder pbb = new PhonegapBuildBuilder("123", "authToken", "AppTitle", true);
-		Assert.assertEquals("AuthToken should be authToken", "authToken", pbb.getAuthToken());
+		Assert.assertEquals("AuthToken should match", APPLICATION_TOKEN, phonegapBuilder.getAuthToken());
 	}
 
 	@Test
 	public void testGetApplicationTitle() throws Exception {
-		final PhonegapBuildBuilder pbb = new PhonegapBuildBuilder("123", "authToken", "AppTitle", true);
-		Assert.assertEquals("App title should be AppTitle", "AppTitle", pbb.getApplicationTitle());
+		Assert.assertEquals("App title should match", APPLICATION_TITLE, phonegapBuilder.getApplicationTitle());
 	}
 
 	@Test

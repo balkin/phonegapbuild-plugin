@@ -1,23 +1,17 @@
 package ru.balkin.jenkins.phonegapbuild;
 
 import groovy.json.JsonBuilder;
-import hudson.Extension;
 import hudson.Launcher;
 import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
-import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
-import net.sf.json.JSONObject;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpException;
-import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.multipart.*;
 import org.apache.commons.httpclient.params.HttpClientParams;
-import org.apache.commons.httpclient.params.HttpMethodParams;
 import org.apache.tools.zip.ZipEntry;
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.StaplerRequest;
 
 import java.io.*;
 import java.util.HashMap;
@@ -105,13 +99,14 @@ public class PhonegapBuildBuilder extends Builder {
 		final ZipOutputStream zos = new ZipOutputStream(bos);
 		// config.xml www resources
 		try {
-			final File wwwDir = new File(build.getRootDir(), "www");
+			final File rootDir = build.getProject().getRootDir();
+			final File wwwDir = new File(rootDir, "www");
 			logger.printf("Zipping %s%n", wwwDir.getAbsolutePath());
 			addToZip(zos, wwwDir, null);
-			final File resourcesDir = new File(build.getRootDir(), "resources");
+			final File resourcesDir = new File(rootDir, "resources");
 			logger.printf("Zipping %s%n", resourcesDir.getAbsolutePath());
 			addToZip(zos, resourcesDir, null);
-			final File configXmlFile = new File(build.getRootDir(), "config.xml");
+			final File configXmlFile = new File(rootDir, "config.xml");
 			logger.printf("Zipping %s%n", configXmlFile.getAbsolutePath());
 			addToZip(zos, configXmlFile, null);
 			zos.flush();
@@ -127,6 +122,7 @@ public class PhonegapBuildBuilder extends Builder {
 		final HttpClientParams params = new HttpClientParams();
 		params.setConnectionManagerTimeout(60000);
 		final HttpClient client = new HttpClient(params);
+
 		final String urlString = "https://build.phonegap.com/api/v1/apps/" + getApplicationId();
 
 		final Map<String, Object> jsonMap = new HashMap<String, Object>();
@@ -136,16 +132,17 @@ public class PhonegapBuildBuilder extends Builder {
 		final String jsonData = new JsonBuilder(jsonMap).toString();
 		logger.printf("JSON data: %s%n", jsonData);
 
-		PostMethod post = new PostMethod(urlString);
+		PutMethod post = new PutMethod(urlString);
 
 		try {
 			final Part authTokenPart = new StringPart("auth_token", getAuthToken());
 			final Part dataPart = new StringPart("data", jsonData);
-			final Part filePart = new FilePart("file", new ByteArrayPartSource("phonegap.zip", bos.toByteArray()));
-			final HttpMethodParams postParams = new HttpMethodParams();
-			post.setRequestEntity(new MultipartRequestEntity(new Part[]{authTokenPart, dataPart, filePart}, postParams));
+			final Part filePart = new FilePart("file", new ByteArrayPartSource("phonegap.zip", bos.toByteArray()), "application/octet-stream", "utf-8");
+
+			final MultipartRequestEntity multipart = new MultipartRequestEntity(new Part[]{authTokenPart, dataPart, filePart}, post.getParams());
+			post.setRequestEntity(multipart);
 			int res = client.executeMethod(post);
-			logger.printf("Executed POST method, response is %d%n", res);
+			logger.printf("Executed PUT method, response is %d%n", res);
 			return true;
 		} catch (FileNotFoundException e) {
 			e.printStackTrace(logger);
