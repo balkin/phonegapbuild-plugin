@@ -3,4 +3,10 @@
   <f:entry title="Application Id" field="applicationId">
     <f:textbox />
   </f:entry>
+  <f:entry title="Authentication Token" field="authToken">
+    <f:textbox />
+  </f:entry>
+  <f:entry title="Application Title" field="applicationTitle">
+    <f:textbox />
+  </f:entry>
 </j:jelly>
