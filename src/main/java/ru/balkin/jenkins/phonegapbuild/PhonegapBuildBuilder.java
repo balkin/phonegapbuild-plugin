@@ -133,14 +133,15 @@ public class PhonegapBuildBuilder extends Builder {
 		jsonMap.put("create_method", "file");
 		jsonMap.put("title", getApplicationTitle());
 		jsonMap.put("share", isApplicationShare());
-		final JsonBuilder jsonBuilder = new JsonBuilder(jsonMap);
+		final String jsonData = new JsonBuilder(jsonMap).toString();
+		logger.printf("JSON data: %s%n", jsonData);
 
 		PostMethod post = new PostMethod(urlString);
 
 		try {
 			final Part authTokenPart = new StringPart("auth_token", getAuthToken());
-			final Part dataPart = new StringPart("data", jsonBuilder.toString());
-			final Part filePart = new FilePart("phonegap.zip", new ByteArrayPartSource("phonegap.zip", bos.toByteArray()));
+			final Part dataPart = new StringPart("data", jsonData);
+			final Part filePart = new FilePart("file", new ByteArrayPartSource("phonegap.zip", bos.toByteArray()));
 			final HttpMethodParams postParams = new HttpMethodParams();
 			post.setRequestEntity(new MultipartRequestEntity(new Part[]{authTokenPart, dataPart, filePart}, postParams));
 			int res = client.executeMethod(post);
