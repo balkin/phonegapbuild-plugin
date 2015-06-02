@@ -25,7 +25,7 @@ public class PhonegapBuildBuilderTest {
 
 	@Before
 	public void beforeMethod() {
-		phonegapBuilder = new PhonegapBuildBuilder(APPLICATION_ID, APPLICATION_TOKEN, APPLICATION_TITLE, true);
+		phonegapBuilder = new PhonegapBuildBuilder(APPLICATION_ID, APPLICATION_TOKEN, APPLICATION_TITLE);
 	}
 
 	@Test
